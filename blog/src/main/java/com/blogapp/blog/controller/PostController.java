@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.blogapp.blog.dto.PostResponse;
 import com.blogapp.blog.entity.Post;
 import com.blogapp.blog.service.PostService;
 
@@ -28,19 +29,19 @@ public class PostController {
     }
 
     @PostMapping("/create-post")
-    public ResponseEntity<Post> createPost(
+    public ResponseEntity<PostResponse> createPost(
             @RequestBody Post post) {
 
-        Post savedPost = postService.createPost(post);
+        PostResponse response= postService.createPost(post);
 
         return new ResponseEntity<>(
-                savedPost,
+                response,
                 HttpStatus.CREATED
         );
     }
 
     @GetMapping
-    public ResponseEntity<List<Post>> getAllPosts() {
+    public ResponseEntity<List<PostResponse>> getAllPosts() {
 
         return ResponseEntity.ok(
                 postService.getAllPosts()
@@ -48,7 +49,7 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Post> getPostById(
+    public ResponseEntity<PostResponse> getPostById(
             @PathVariable Long id) {
 
         return ResponseEntity.ok(
@@ -57,7 +58,7 @@ public class PostController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Post> updatePost(
+    public ResponseEntity<PostResponse> updatePost(
             @PathVariable Long id,
             @RequestBody Post post) {
 
@@ -67,18 +68,16 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletePost(
+    public ResponseEntity<Void> deletePost(
             @PathVariable Long id) {
 
         postService.deletePost(id);
 
-        return ResponseEntity.ok(
-                "Post deleted successfully"
-        );
+        return ResponseEntity.noContent().build();
     }
     
     @GetMapping("/search")
-    public ResponseEntity<List<Post>> searchPosts(
+    public ResponseEntity<List<PostResponse>> searchPosts(
             @RequestParam String keyword) {
 
         return ResponseEntity.ok(
