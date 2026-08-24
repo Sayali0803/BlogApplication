@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Container } from "react-bootstrap";
 import api from "../services/api";
+import { FiType, FiAlignLeft, FiSend } from "react-icons/fi";
+import { MdOutlineCreate } from "react-icons/md";
 
 function CreatePost() {
 
@@ -56,55 +59,104 @@ function CreatePost() {
     };
 
     return (
-        <div>
+        <div className="post-form-page">
+            <Container>
+                <div className="post-form-card mx-auto">
 
-            <h1>Create Post</h1>
+                    {/* Header */}
+                    <div className="post-form-header">
+                        <div className="post-form-header-icon">
+                            <MdOutlineCreate color="#fff" size={26} />
+                        </div>
+                        <div>
+                            <h1>Create New Post</h1>
+                            <p>Share your thoughts with the world</p>
+                        </div>
+                    </div>
 
-            {error && (
-                <p>{error}</p>
-            )}
+                    {/* Error */}
+                    {error && (
+                        <div className="alert-custom-error mb-4" role="alert">
+                            ⚠️ {error}
+                        </div>
+                    )}
 
-            <form onSubmit={handleSubmit}>
+                    {/* Form */}
+                    <form onSubmit={handleSubmit}>
 
-                <div>
-                    <label>Title</label>
+                        {/* Title */}
+                        <div className="mb-4">
+                            <label className="form-label-custom">
+                                Post Title
+                            </label>
+                            <div className="input-group-custom">
+                                <span className="input-icon">
+                                    <FiType />
+                                </span>
+                                <input
+                                    type="text"
+                                    className="form-control-custom"
+                                    value={title}
+                                    onChange={(e) =>
+                                        setTitle(e.target.value)
+                                    }
+                                    placeholder="Write a captivating title..."
+                                    required
+                                />
+                            </div>
+                        </div>
 
-                    <input
-                        type="text"
-                        value={title}
-                        onChange={(e) =>
-                            setTitle(e.target.value)
-                        }
-                        placeholder="Enter post title"
-                        required
-                    />
+                        {/* Content */}
+                        <div className="mb-4">
+                            <label className="form-label-custom d-flex align-items-center gap-2">
+                                <FiAlignLeft size={14} />
+                                Content
+                            </label>
+                            <textarea
+                                className="textarea-custom"
+                                value={content}
+                                onChange={(e) =>
+                                    setContent(e.target.value)
+                                }
+                                placeholder="Write your story here... Let your ideas flow."
+                                rows="10"
+                                required
+                            />
+                        </div>
+
+                        {/* Actions */}
+                        <div className="d-flex gap-3 flex-wrap">
+                            <button
+                                type="submit"
+                                className="btn btn-submit-form"
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm" role="status" />
+                                        Publishing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FiSend size={16} />
+                                        Publish Post
+                                    </>
+                                )}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn btn-cancel"
+                                onClick={() => navigate("/")}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+
+                    </form>
+
                 </div>
-
-                <div>
-                    <label>Content</label>
-
-                    <textarea
-                        value={content}
-                        onChange={(e) =>
-                            setContent(e.target.value)
-                        }
-                        placeholder="Write your post..."
-                        rows="10"
-                        required
-                    />
-                </div>
-
-                <button
-                    type="submit"
-                    disabled={loading}
-                >
-                    {loading
-                        ? "Creating..."
-                        : "Create Post"}
-                </button>
-
-            </form>
-
+            </Container>
         </div>
     );
 }

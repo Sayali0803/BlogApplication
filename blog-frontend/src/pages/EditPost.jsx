@@ -3,8 +3,10 @@ import {
     useNavigate,
     useParams
 } from "react-router-dom";
-
+import { Container } from "react-bootstrap";
 import api from "../services/api";
+import { FiType, FiAlignLeft, FiSave, FiArrowLeft } from "react-icons/fi";
+import { MdOutlineEdit } from "react-icons/md";
 
 function EditPost() {
 
@@ -110,7 +112,12 @@ function EditPost() {
     // =========================================================
 
     if (loading) {
-        return <h2>Loading post...</h2>;
+        return (
+            <div className="loading-container">
+                <div className="spinner-custom"></div>
+                <p>Loading post...</p>
+            </div>
+        );
     }
 
     // =========================================================
@@ -118,84 +125,111 @@ function EditPost() {
     // =========================================================
 
     return (
-        <div>
+        <div className="post-form-page">
+            <Container>
+                <div className="post-form-card mx-auto">
 
-            <h1>Edit Post</h1>
+                    {/* Header */}
+                    <div className="post-form-header">
+                        <div className="post-form-header-icon edit-icon">
+                            <MdOutlineEdit color="#fff" size={26} />
+                        </div>
+                        <div>
+                            <h1>Edit Post</h1>
+                            <p>Update your story and republish</p>
+                        </div>
+                    </div>
 
-            {error && (
-                <p>{error}</p>
-            )}
+                    {/* Error */}
+                    {error && (
+                        <div className="alert-custom-error mb-4" role="alert">
+                            ⚠️ {error}
+                        </div>
+                    )}
 
-            <form onSubmit={handleSubmit}>
+                    {/* Form */}
+                    <form onSubmit={handleSubmit}>
 
-                <div>
+                        {/* Title */}
+                        <div className="mb-4">
+                            <label className="form-label-custom">
+                                Post Title
+                            </label>
+                            <div className="input-group-custom">
+                                <span className="input-icon">
+                                    <FiType />
+                                </span>
+                                <input
+                                    type="text"
+                                    className="form-control-custom"
+                                    value={title}
+                                    onChange={(e) =>
+                                        setTitle(
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="Post title..."
+                                    required
+                                />
+                            </div>
+                        </div>
 
-                    <label>
-                        Title
-                    </label>
+                        {/* Content */}
+                        <div className="mb-4">
+                            <label className="form-label-custom d-flex align-items-center gap-2">
+                                <FiAlignLeft size={14} />
+                                Content
+                            </label>
+                            <textarea
+                                className="textarea-custom"
+                                rows="10"
+                                value={content}
+                                onChange={(e) =>
+                                    setContent(
+                                        e.target.value
+                                    )
+                                }
+                                placeholder="Update your content..."
+                                required
+                            />
+                        </div>
 
-                    <br />
+                        {/* Actions */}
+                        <div className="d-flex gap-3 flex-wrap">
+                            <button
+                                type="submit"
+                                className="btn btn-submit-form edit-submit"
+                                disabled={saving}
+                            >
+                                {saving ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm" role="status" />
+                                        Updating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FiSave size={16} />
+                                        Save Changes
+                                    </>
+                                )}
+                            </button>
 
-                    <input
-                        type="text"
-                        value={title}
-                        onChange={(e) =>
-                            setTitle(
-                                e.target.value
-                            )
-                        }
-                        required
-                    />
+                            <button
+                                type="button"
+                                className="btn btn-cancel"
+                                onClick={() =>
+                                    navigate("/")
+                                }
+                            >
+                                <FiArrowLeft size={15} />
+                                Cancel
+                            </button>
+                        </div>
+
+                    </form>
 
                 </div>
-
-                <br />
-
-                <div>
-
-                    <label>
-                        Content
-                    </label>
-
-                    <br />
-
-                    <textarea
-                        rows="10"
-                        value={content}
-                        onChange={(e) =>
-                            setContent(
-                                e.target.value
-                            )
-                        }
-                        required
-                    />
-
-                </div>
-
-                <br />
-
-                <button
-                    type="submit"
-                    disabled={saving}
-                >
-                    {saving
-                        ? "Updating..."
-                        : "Update Post"}
-                </button>
-
-                {" "}
-
-                <button
-                    type="button"
-                    onClick={() =>
-                        navigate("/")
-                    }
-                >
-                    Cancel
-                </button>
-
-            </form>
-
+            </Container>
         </div>
     );
 }

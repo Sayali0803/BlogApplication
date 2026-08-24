@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Container } from "react-bootstrap";
 import api from "../services/api";
+import {
+    FiSearch, FiX, FiEdit2, FiTrash2,
+    FiUser, FiCalendar, FiPenTool, FiBookOpen
+} from "react-icons/fi";
+import { HiSparkles } from "react-icons/hi";
 
 function Dashboard() {
 
@@ -147,139 +153,184 @@ function Dashboard() {
     // =========================================================
 
     if (loading) {
-        return <h2>Loading posts...</h2>;
+        return (
+            <div className="loading-container">
+                <div className="spinner-custom"></div>
+                <p>Loading posts...</p>
+            </div>
+        );
     }
+
+    // Helper: format date nicely
+    const formatDate = (dateStr) => {
+        if (!dateStr) return "N/A";
+        return new Date(dateStr).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+        });
+    };
+
+    // Stats
+    const myPosts = posts.filter(p => p.user?.email === currentUser?.email);
 
     // =========================================================
     // UI
     // =========================================================
 
     return (
-        <div>
+        <div className="dashboard-page">
+            <Container>
 
-            <h1>Blog Dashboard</h1>
+                {/* Hero */}
+                <div className="dashboard-hero">
+                    <h1>
+                        <HiSparkles style={{ fontSize: "0.8em", verticalAlign: 2 }} />
+                        {" "}Blogify Dashboard
+                    </h1>
+                    <p>Discover stories, ideas, and perspectives from our community</p>
+                </div>
 
-            {/* ================= SEARCH ================= */}
-
-            <div>
-
-                <input
-                    type="text"
-                    value={keyword}
-                    onChange={(e) =>
-                        setKeyword(e.target.value)
-                    }
-                    placeholder="Search posts..."
-                />
-
-                <button onClick={searchPosts}>
-                    Search
-                </button>
-
-                <button
-                    onClick={() => {
-                        setKeyword("");
-                        fetchPosts();
-                    }}
-                >
-                    Clear
-                </button>
-
-            </div>
-
-            <br />
-
-            {/* ================= ERROR ================= */}
-
-            {error && (
-                <p>{error}</p>
-            )}
-
-            {/* ================= POSTS ================= */}
-
-            {posts.length === 0 ? (
-
-                <p>No posts found.</p>
-
-            ) : (
-
-                posts.map((post) => {
-
-                    // =================================================
-                    // CHECK WHETHER CURRENT USER OWNS THIS POST
-                    // =================================================
-
-                    const isOwner =
-                        post.user?.email ===
-                        currentUser?.email;
-
-                    return (
-
-                        <div key={post.id}>
-
-                            <h2>
-                                {post.title}
-                            </h2>
-
-                            <p>
-                                {post.content}
-                            </p>
-
-                            <p>
-                                <strong>
-                                    Author:
-                                </strong>{" "}
-                                {post.user?.name}
-                            </p>
-
-                            <p>
-                                <strong>
-                                    Created:
-                                </strong>{" "}
-                                {post.createdAt
-                                    ? new Date(
-                                        post.createdAt
-                                    ).toLocaleString()
-                                    : "N/A"}
-                            </p>
-
-                            {/* =================================================
-                                ONLY OWNER CAN SEE EDIT / DELETE
-                            ================================================= */}
-
-                            {isOwner && (
-                                <>
-
-                                    <Link
-                                        to={`/edit-post/${post.id}`}
-                                    >
-                                        <button>
-                                            Edit
-                                        </button>
-                                    </Link>
-
-                                    {" "}
-
-                                    <button
-                                        onClick={() =>
-                                            deletePost(
-                                                post.id
-                                            )
-                                        }
-                                    >
-                                        Delete
-                                    </button>
-
-                                </>
-                            )}
-
-                            <hr />
-
+                {/* Stats */}
+                <div className="stats-row">
+                    <div className="stat-card">
+                        <div className="stat-number">{posts.length}</div>
+                        <div className="stat-label">Total Posts</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-number">{myPosts.length}</div>
+                        <div className="stat-label">My Posts</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-number">
+                            {new Set(posts.map(p => p.user?.name).filter(Boolean)).size}
                         </div>
-                    );
-                })
-            )}
+                        <div className="stat-label">Authors</div>
+                    </div>
+                </div>
 
+                {/* Search & Create Bar */}
+                <div className="search-bar-wrap">
+                    <FiSearch color="#7c3aed" size={18} />
+                    <input
+                        type="text"
+                        className="search-input"
+                        value={keyword}
+                        onChange={(e) => setKeyword(e.target.value)}
+                        placeholder="Search posts by title or content..."
+                        onKeyDown={(e) => e.key === "Enter" && searchPosts()}
+                    />
+                    <button className="btn btn-search" onClick={searchPosts}>
+                        <FiSearch size={15} /> Search
+                    </button>
+                    <button
+                        className="btn btn-clear"
+                        onClick={() => {
+                            setKeyword("");
+                            fetchPosts();
+                        }}
+                    >
+                        <FiX size={15} /> Clear
+                    </button>
+                    <Link to="/create-post" className="btn btn-create-post ms-auto">
+                        <FiPenTool size={15} /> Write Post
+                    </Link>
+                </div>
+
+                {/* Error */}
+                {error && (
+                    <div className="alert-custom-error mb-4" role="alert">
+                        ⚠️ {error}
+                    </div>
+                )}
+
+                {/* Posts */}
+                {posts.length === 0 ? (
+
+                    <div className="no-posts-card">
+                        <div className="icon-big">
+                            <FiBookOpen />
+                        </div>
+                        <h3>No posts found</h3>
+                        <p>
+                            {keyword
+                                ? `No results for "${keyword}". Try a different search term.`
+                                : "Be the first to write something amazing!"}
+                        </p>
+                    </div>
+
+                ) : (
+
+                    posts.map((post) => {
+
+                        // =================================================
+                        // CHECK WHETHER CURRENT USER OWNS THIS POST
+                        // =================================================
+
+                        const isOwner =
+                            post.user?.email ===
+                            currentUser?.email;
+
+                        return (
+
+                            <div key={post.id} className="post-card">
+
+                                {/* Title row */}
+                                <div className="d-flex align-items-start gap-2 mb-1 flex-wrap">
+                                    <h2 className="post-card-title flex-grow-1">
+                                        {post.title}
+                                    </h2>
+                                    {isOwner && (
+                                        <span className="owner-badge">
+                                            ✏️ Yours
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Content preview */}
+                                <p className="post-card-content">
+                                    {post.content}
+                                </p>
+
+                                {/* Meta */}
+                                <div className="post-meta">
+                                    <span className="author-badge">
+                                        <FiUser size={11} />
+                                        {post.user?.name || "Unknown"}
+                                    </span>
+                                    <span className="post-meta-item">
+                                        <FiCalendar size={12} />
+                                        {formatDate(post.createdAt)}
+                                    </span>
+                                </div>
+
+                                {/* Owner Actions */}
+                                {isOwner && (
+                                    <div className="post-actions">
+                                        <Link
+                                            to={`/edit-post/${post.id}`}
+                                            className="btn-edit"
+                                        >
+                                            <FiEdit2 size={13} /> Edit
+                                        </Link>
+
+                                        <button
+                                            className="btn btn-delete"
+                                            onClick={() =>
+                                                deletePost(post.id)
+                                            }
+                                        >
+                                            <FiTrash2 size={13} /> Delete
+                                        </button>
+                                    </div>
+                                )}
+
+                            </div>
+                        );
+                    })
+                )}
+
+            </Container>
         </div>
     );
 }

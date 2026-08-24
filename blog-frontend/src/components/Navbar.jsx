@@ -1,6 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
+import { Container, Nav, Navbar } from "react-bootstrap";
+import { FiLogOut, FiPenTool, FiHome, FiUser } from "react-icons/fi";
 
-function Navbar() {
+
+function AppNavbar() {
 
     const navigate = useNavigate();
 
@@ -13,52 +16,61 @@ function Navbar() {
         : null;
 
     const handleLogout = () => {
-
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-
         navigate("/login");
     };
 
     return (
-        <nav>
+        <Navbar className="blog-navbar" expand="lg">
+            <Container>
+                {/* Brand */}
+                <Navbar.Brand as={Link} to="/" className="d-flex align-items-center gap-2">
+                    <img
+                        src="/favicon.svg"
+                        alt="Blogify"
+                        style={{ width: 32, height: 32, borderRadius: 8 }}
+                    />
+                    Blogify
+                </Navbar.Brand>
 
-            <div>
-                <Link to="/">
-                    <strong>My Blog</strong>
-                </Link>
-            </div>
+                <Navbar.Toggle
+                    aria-controls="main-navbar"
+                    style={{
+                        border: "1px solid rgba(255,255,255,0.2)",
+                        filter: "invert(1)"
+                    }}
+                />
 
-            {token && (
-                <div>
+                <Navbar.Collapse id="main-navbar">
+                    {token && (
+                        <Nav className="ms-auto align-items-center gap-2">
+                            <Nav.Link as={Link} to="/" className="d-flex align-items-center gap-1">
+                                <FiHome size={14} /> Home
+                            </Nav.Link>
 
-                    <Link to="/">
-                        Home
-                    </Link>
+                            <Nav.Link as={Link} to="/create-post" className="d-flex align-items-center gap-1">
+                                <FiPenTool size={14} /> Write
+                            </Nav.Link>
 
-                    {" | "}
+                            <div className="welcome-badge ms-2">
+                                <FiUser size={13} />
+                                {user?.name}
+                            </div>
 
-                    <Link to="/create-post">
-                        Create Post
-                    </Link>
-
-                    {" | "}
-
-                    <span>
-                        Welcome, {user?.name}
-                    </span>
-
-                    {" | "}
-
-                    <button onClick={handleLogout}>
-                        Logout
-                    </button>
-
-                </div>
-            )}
-
-        </nav>
+                            <button
+                                className="btn navbar-logout-btn ms-2 d-flex align-items-center gap-2"
+                                onClick={handleLogout}
+                            >
+                                <FiLogOut size={14} />
+                                Logout
+                            </button>
+                        </Nav>
+                    )}
+                </Navbar.Collapse>
+            </Container>
+        </Navbar>
     );
 }
 
-export default Navbar;
+export default AppNavbar;

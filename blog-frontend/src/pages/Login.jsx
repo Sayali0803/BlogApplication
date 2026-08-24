@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-
 import api from "../services/api";
+import { FiMail, FiLock, FiLogIn } from "react-icons/fi";
+import { MdOutlineArticle } from "react-icons/md";
 
 function Login() {
 
@@ -63,62 +64,96 @@ function Login() {
     };
 
     return (
-        <div>
+        <div className="auth-page">
+            <div className="auth-card">
 
-            <h1>Login</h1>
-
-            {error && (
-                <p>{error}</p>
-            )}
-
-            <form onSubmit={handleSubmit}>
-
-                <div>
-                    <label>Email</label>
-
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) =>
-                            setEmail(e.target.value)
-                        }
-                        placeholder="Enter email"
-                        required
-                    />
+                {/* Header */}
+                <div className="auth-card-header">
+                    <div className="auth-icon-wrap">
+                        <MdOutlineArticle color="#fff" />
+                    </div>
+                    <h1>Welcome Back</h1>
+                    <p>Sign in to your Blogify account</p>
                 </div>
 
-                <div>
-                    <label>Password</label>
+                {/* Error */}
+                {error && (
+                    <div className="alert-custom-error mb-3" role="alert">
+                        ⚠️ {error}
+                    </div>
+                )}
 
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) =>
-                            setPassword(e.target.value)
-                        }
-                        placeholder="Enter password"
-                        required
-                    />
-                </div>
+                {/* Form */}
+                <form onSubmit={handleSubmit}>
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                >
-                    {loading
-                        ? "Logging in..."
-                        : "Login"}
-                </button>
+                    {/* Email */}
+                    <div className="mb-3">
+                        <label className="form-label-custom">
+                            Email Address
+                        </label>
+                        <div className="input-group-custom">
+                            <span className="input-icon">
+                                <FiMail />
+                            </span>
+                            <input
+                                type="email"
+                                className="form-control-custom"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Enter your email"
+                                required
+                            />
+                        </div>
+                    </div>
 
-            </form>
+                    {/* Password */}
+                    <div className="mb-4">
+                        <label className="form-label-custom">
+                            Password
+                        </label>
+                        <div className="input-group-custom">
+                            <span className="input-icon">
+                                <FiLock />
+                            </span>
+                            <input
+                                type="password"
+                                className="form-control-custom"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Enter your password"
+                                required
+                            />
+                        </div>
+                    </div>
 
-            <p>
-                Don't have an account?{" "}
-                <Link to="/register">
-                    Register
-                </Link>
-            </p>
+                    {/* Submit */}
+                    <button
+                        type="submit"
+                        className="btn btn-gradient-primary"
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status" />
+                                Signing in...
+                            </>
+                        ) : (
+                            <>
+                                <FiLogIn size={16} className="me-2" />
+                                Sign In
+                            </>
+                        )}
+                    </button>
 
+                </form>
+
+                {/* Footer */}
+                <p className="auth-footer-text">
+                    Don&apos;t have an account?{" "}
+                    <Link to="/register">Create one now</Link>
+                </p>
+
+            </div>
         </div>
     );
 }
