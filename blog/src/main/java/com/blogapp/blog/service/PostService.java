@@ -10,6 +10,7 @@ import com.blogapp.blog.dto.PostResponse;
 import com.blogapp.blog.dto.UserResponseDto;
 import com.blogapp.blog.entity.Post;
 import com.blogapp.blog.entity.User;
+import com.blogapp.blog.exception.ResourceNotFoundException;
 import com.blogapp.blog.exception.UnauthorizedException;
 import com.blogapp.blog.repository.PostRepository;
 import com.blogapp.blog.repository.UserRepository;
@@ -33,7 +34,7 @@ public class PostService {
 //		String email = authentication.getName();
 //
 //		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not Found!"));
-		
+
 		User authenticatedUser = getAuthenticatedUser();
 
 		post.setUser(authenticatedUser);
@@ -43,17 +44,15 @@ public class PostService {
 
 	// READ ALL
 	public List<PostResponse> getAllPosts() {
-		return postRepository.findAll()
-				.stream()
-				.map(this::convertToResponse)
-				.toList();
+		return postRepository.findAll().stream().map(this::convertToResponse).toList();
 	}
 
 	// READ ONE
 	public PostResponse getPostById(Long id) {
 
-		Post post= postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
-	
+		Post post = postRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
+
 		return convertToResponse(post);
 	}
 
@@ -61,22 +60,20 @@ public class PostService {
 	public PostResponse updatePost(Long id, Post updatedPost) {
 
 		Post existingPost = postRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
+				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + id));
 
 		User authenticatedUser = getAuthenticatedUser();
 
 //		Check ownership
 		if (!existingPost.getUser().getId().equals(authenticatedUser.getId())) {
 
-			throw new UnauthorizedException(
-			        "You are not allowed to update this post"
-			);
+			throw new UnauthorizedException("You are not allowed to update this post");
 		}
 
 		existingPost.setTitle(updatedPost.getTitle());
 		existingPost.setContent(updatedPost.getContent());
 
-		Post post =  postRepository.save(existingPost);
+		Post post = postRepository.save(existingPost);
 		return convertToResponse(post);
 	}
 
@@ -87,18 +84,13 @@ public class PostService {
 //			throw new RuntimeException("Post not found with id: " + id);
 //		}
 		Post existingPost = postRepository.findById(id)
-						.orElseThrow(() ->
-						new RuntimeException(
-								"Post not found with id: " + id
-								));
+				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + id));
 		User authenticatedUser = getAuthenticatedUser();
 
 //		Check ownership
 		if (!existingPost.getUser().getId().equals(authenticatedUser.getId())) {
 
-			throw new UnauthorizedException(
-			        "You are not allowed to delete this post"
-			);
+			throw new UnauthorizedException("You are not allowed to delete this post");
 		}
 //		postRepository.deleteById(id);
 		postRepository.delete(existingPost);
@@ -106,10 +98,7 @@ public class PostService {
 
 	// SEARCH BY TITLE
 	public List<PostResponse> searchPosts(String keyword) {
-		return postRepository.findByTitleContainingIgnoreCase(keyword)
-				.stream()
-				.map(this::convertToResponse)
-				.toList();
+		return postRepository.findByTitleContainingIgnoreCase(keyword).stream().map(this::convertToResponse).toList();
 	}
 
 	private User getAuthenticatedUser() {
@@ -120,23 +109,13 @@ public class PostService {
 		return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not Found!"));
 
 	}
-	
+
 	private PostResponse convertToResponse(Post post) {
-		
-		UserResponseDto userResponse =
-					new UserResponseDto(
-							post.getUser().getId(),
-							post.getUser().getName(),
-							post.getUser().getEmail()
-							);		
-		
-		return new PostResponse(
-				post.getId(),
-				post.getTitle(),
-				post.getContent(),
-				post.getCreatedAt(),
-				post.getUpdatedAt(),
-				userResponse
-				);
+
+		UserResponseDto userResponse = new UserResponseDto(post.getUser().getId(), post.getUser().getName(),
+				post.getUser().getEmail());
+
+		return new PostResponse(post.getId(), post.getTitle(), post.getContent(), post.getCreatedAt(),
+				post.getUpdatedAt(), userResponse);
 	}
 }

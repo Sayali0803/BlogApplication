@@ -11,9 +11,30 @@ import com.blogapp.blog.dto.ErrorResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+	
+	// =====================================================
+    // RESOURCE NOT FOUND - 404
+    // =====================================================
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(
+            ResourceNotFoundException exception) {
+
+        ErrorResponse response =
+                new ErrorResponse(
+                        HttpStatus.NOT_FOUND.value(),
+                        exception.getMessage(),
+                        LocalDateTime.now()
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
 
     // =====================================================
-    // Unauthorized / ownership error
+    // Unauthorized / ownership error/ FORBIDDEN - 403
     // =====================================================
 
     @ExceptionHandler(UnauthorizedException.class)
@@ -33,7 +54,7 @@ public class GlobalExceptionHandler {
     }
 
     // =====================================================
-    // General RuntimeException
+    // General RuntimeException-400
     // =====================================================
 
     @ExceptionHandler(RuntimeException.class)
@@ -53,7 +74,7 @@ public class GlobalExceptionHandler {
     }
 
     // =====================================================
-    // Any unexpected exception
+    // Any unexpected exception--500
     // =====================================================
 
     @ExceptionHandler(Exception.class)
