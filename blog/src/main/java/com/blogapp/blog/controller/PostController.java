@@ -14,9 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.blogapp.blog.dto.PostRequest;
 import com.blogapp.blog.dto.PostResponse;
 import com.blogapp.blog.entity.Post;
 import com.blogapp.blog.service.PostService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -30,14 +33,13 @@ public class PostController {
 
     @PostMapping("/create-post")
     public ResponseEntity<PostResponse> createPost(
-            @RequestBody Post post) {
+    		@RequestBody @Valid PostRequest request) {
 
-        PostResponse response= postService.createPost(post);
+        PostResponse response= postService.createPost(request);
 
-        return new ResponseEntity<>(
-                response,
-                HttpStatus.CREATED
-        );
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @GetMapping

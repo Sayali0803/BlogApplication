@@ -6,12 +6,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.blogapp.blog.dto.PostRequest;
 import com.blogapp.blog.dto.PostResponse;
 import com.blogapp.blog.dto.UserResponseDto;
+import com.blogapp.blog.entity.Category;
 import com.blogapp.blog.entity.Post;
 import com.blogapp.blog.entity.User;
 import com.blogapp.blog.exception.ResourceNotFoundException;
 import com.blogapp.blog.exception.UnauthorizedException;
+import com.blogapp.blog.repository.CategoryRepository;
 import com.blogapp.blog.repository.PostRepository;
 import com.blogapp.blog.repository.UserRepository;
 
@@ -21,14 +24,21 @@ public class PostService {
 	private final PostRepository postRepository;
 
 	private final UserRepository userRepository;
+	
+	private final CategoryRepository categoryRepository;
 
-	public PostService(PostRepository postRepository, UserRepository userRepository) {
+	
+
+	public PostService(PostRepository postRepository, UserRepository userRepository,
+			CategoryRepository categoryRepository) {
+		super();
 		this.postRepository = postRepository;
 		this.userRepository = userRepository;
+		this.categoryRepository = categoryRepository;
 	}
 
 	// CREATE
-	public PostResponse createPost(Post post) {
+	public PostResponse createPost(PostRequest request) {
 //		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 //
 //		String email = authentication.getName();
@@ -36,8 +46,22 @@ public class PostService {
 //		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not Found!"));
 
 		User authenticatedUser = getAuthenticatedUser();
-
-		post.setUser(authenticatedUser);
+		 Category category =
+		            categoryRepository.findById(
+		                    request.getCategoryId()
+		            )
+		            .orElseThrow(() ->
+		                    new ResourceNotFoundException(
+		                            "Category not found"
+		                    )
+		            );
+		Post post = new Post();
+		
+		post.setTitle(request.getTitle());
+		post.setContent(request.getContent());
+	    post.setUser(authenticatedUser);
+	    post.setCategory(category);
+	    
 		Post savedPost = postRepository.save(post);
 		return convertToResponse(savedPost);
 	}
