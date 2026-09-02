@@ -13,6 +13,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AppNavbar from "./components/Navbar";
 
 import EditPost from "./pages/EditPost";
+import PostDetail from "./pages/PostDetail";
 
 function App() {
 
@@ -56,6 +57,15 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <EditPost />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/posts/:id"
+                    element={
+                        <ProtectedRoute>
+                            <PostDetail />
                         </ProtectedRoute>
                     }
                 />

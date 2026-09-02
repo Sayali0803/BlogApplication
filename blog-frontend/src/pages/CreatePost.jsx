@@ -1,19 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container } from "react-bootstrap";
 import api from "../services/api";
-import { FiType, FiAlignLeft, FiSend } from "react-icons/fi";
+import { FiType, FiAlignLeft, FiSend, FiTag } from "react-icons/fi";
 import { MdOutlineCreate } from "react-icons/md";
 
 function CreatePost() {
 
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
+    const [categories, setCategories] = useState([]);
+    const [categoryId, setCategoryId] = useState("");
 
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+
+        const fetchCategories = async () => {
+
+            try {
+
+                const response = await api.get("/categories");
+
+                setCategories(response.data);
+
+            } catch (error) {
+
+                console.error(error);
+            }
+        };
+
+        fetchCategories();
+
+    }, []);
 
     const handleSubmit = async (e) => {
 
@@ -28,7 +50,8 @@ function CreatePost() {
                 "/posts/create-post",
                 {
                     title,
-                    content
+                    content,
+                    categoryId: Number(categoryId)
                 }
             );
 
@@ -122,6 +145,42 @@ function CreatePost() {
                                 rows="10"
                                 required
                             />
+                        </div>
+
+                        {/* Category */}
+                        <div className="mb-4">
+                            <label className="form-label-custom d-flex align-items-center gap-2">
+                                <FiTag size={14} />
+                                Category
+                            </label>
+                            <div className="input-group-custom">
+                                <span className="input-icon">
+                                    <FiTag />
+                                </span>
+                                <select
+                                    className="form-control-custom select-custom"
+                                    value={categoryId}
+                                    onChange={(e) =>
+                                        setCategoryId(e.target.value)
+                                    }
+                                    required
+                                >
+                                    <option value="">
+                                        Select Category
+                                    </option>
+
+                                    {categories.map((category) => (
+
+                                        <option
+                                            key={category.id}
+                                            value={category.id}
+                                        >
+                                            {category.name}
+                                        </option>
+
+                                    ))}
+                                </select>
+                            </div>
                         </div>
 
                         {/* Actions */}

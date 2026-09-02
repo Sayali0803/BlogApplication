@@ -4,7 +4,7 @@ import { Container } from "react-bootstrap";
 import api from "../services/api";
 import {
     FiSearch, FiX, FiEdit2, FiTrash2,
-    FiUser, FiCalendar, FiPenTool, FiBookOpen
+    FiUser, FiCalendar, FiPenTool, FiBookOpen, FiEye, FiHeart
 } from "react-icons/fi";
 import { HiSparkles } from "react-icons/hi";
 
@@ -15,6 +15,9 @@ function Dashboard() {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    // Likes state: { [postId]: { likeCount, likedByCurrentUser } }
+    const [likeData, setLikeData] = useState({});
 
     // Get logged-in user
     const storedUser = localStorage.getItem("user");
@@ -41,7 +44,24 @@ function Dashboard() {
             const response =
                 await api.get("/posts");
 
-            setPosts(response.data);
+            const fetchedPosts = response.data;
+            setPosts(fetchedPosts);
+
+            // Fetch like status for every post in parallel
+            const likeResults = await Promise.allSettled(
+                fetchedPosts.map((p) =>
+                    api.get(`/posts/${p.id}/like`)
+                )
+            );
+
+            const newLikeData = {};
+            likeResults.forEach((result, index) => {
+                if (result.status === "fulfilled") {
+                    newLikeData[fetchedPosts[index].id] =
+                        result.value.data;
+                }
+            });
+            setLikeData(newLikeData);
 
         } catch (error) {
 
@@ -58,6 +78,43 @@ function Dashboard() {
         } finally {
 
             setLoading(false);
+        }
+    };
+
+    // =========================================================
+    // LIKE / UNLIKE
+    // =========================================================
+
+    const handleLike = async (postId) => {
+        try {
+            const response = await api.post(`/posts/${postId}/like`);
+            setLikeData((prev) => ({
+                ...prev,
+                [postId]: response.data
+            }));
+        } catch (error) {
+            console.error("Like error:", error);
+        }
+    };
+
+    const handleUnlike = async (postId) => {
+        try {
+            const response = await api.delete(`/posts/${postId}/like`);
+            setLikeData((prev) => ({
+                ...prev,
+                [postId]: response.data
+            }));
+        } catch (error) {
+            console.error("Unlike error:", error);
+        }
+    };
+
+    const toggleLike = (postId) => {
+        const current = likeData[postId];
+        if (current?.likedByCurrentUser) {
+            handleUnlike(postId);
+        } else {
+            handleLike(postId);
         }
     };
 
@@ -304,26 +361,64 @@ function Dashboard() {
                                     </span>
                                 </div>
 
-                                {/* Owner Actions */}
-                                {isOwner && (
-                                    <div className="post-actions">
-                                        <Link
-                                            to={`/edit-post/${post.id}`}
-                                            className="btn-edit"
-                                        >
-                                            <FiEdit2 size={13} /> Edit
-                                        </Link>
+                                {/* Card Footer Actions */}
+                                <div className="post-actions">
 
-                                        <button
-                                            className="btn btn-delete"
-                                            onClick={() =>
-                                                deletePost(post.id)
-                                            }
-                                        >
-                                            <FiTrash2 size={13} /> Delete
-                                        </button>
-                                    </div>
-                                )}
+                                    {/* Combined Like toggle button */}
+                                    {(() => {
+                                        const cl = likeData[post.id] || {
+                                            likeCount: 0,
+                                            likedByCurrentUser: false
+                                        };
+                                        return (
+                                            <button
+                                                className={`btn-like-toggle${
+                                                    cl.likedByCurrentUser
+                                                        ? " liked"
+                                                        : ""
+                                                }`}
+                                                onClick={() =>
+                                                    toggleLike(post.id)
+                                                }
+                                                title={
+                                                    cl.likedByCurrentUser
+                                                        ? "Unlike"
+                                                        : "Like"
+                                                }
+                                            >
+                                                <FiHeart size={14} />
+                                                {cl.likeCount}
+                                            </button>
+                                        );
+                                    })()}
+
+                                    <Link
+                                        to={`/posts/${post.id}`}
+                                        className="btn-view"
+                                    >
+                                        <FiEye size={13} /> View
+                                    </Link>
+
+                                    {isOwner && (
+                                        <>
+                                            <Link
+                                                to={`/edit-post/${post.id}`}
+                                                className="btn-edit"
+                                            >
+                                                <FiEdit2 size={13} /> Edit
+                                            </Link>
+
+                                            <button
+                                                className="btn btn-delete"
+                                                onClick={() =>
+                                                    deletePost(post.id)
+                                                }
+                                            >
+                                                <FiTrash2 size={13} /> Delete
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
 
                             </div>
                         );
