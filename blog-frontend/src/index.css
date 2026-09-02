@@ -1583,6 +1583,86 @@ body::before {
 }
 
 /* =============================================
+   REACTION SECTION — LIKE / DISLIKE
+   ============================================= */
+
+.reaction-section {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(124, 58, 237, 0.05);
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  border-radius: 50px;
+  padding: 3px;
+}
+
+/* Base reaction button */
+.btn-reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 13px;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  transition: var(--transition);
+  font-family: var(--font-main);
+  line-height: 1;
+}
+
+.btn-reaction span {
+  font-variant-numeric: tabular-nums;
+  min-width: 16px;
+  text-align: left;
+}
+
+/* Like button — idle */
+.btn-reaction-like:hover {
+  background: rgba(5, 150, 105, 0.1);
+  color: #059669;
+}
+
+/* Like button — active */
+.btn-reaction-like.active-reaction {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(5, 150, 105, 0.40);
+}
+
+.btn-reaction-like.active-reaction:hover {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  box-shadow: 0 5px 16px rgba(5, 150, 105, 0.50);
+  transform: translateY(-1px);
+}
+
+/* Dislike button — idle */
+.btn-reaction-dislike:hover {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+/* Dislike button — active */
+.btn-reaction-dislike.active-reaction {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(220, 38, 38, 0.40);
+}
+
+.btn-reaction-dislike.active-reaction:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  box-shadow: 0 5px 16px rgba(220, 38, 38, 0.50);
+  transform: translateY(-1px);
+}
+
+.btn-reaction:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* =============================================
    RESPONSIVE TWEAKS
    ============================================= */
 @media (max-width: 576px) {

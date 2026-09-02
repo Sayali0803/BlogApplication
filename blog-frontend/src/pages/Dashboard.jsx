@@ -3,8 +3,14 @@ import { Link } from "react-router-dom";
 import { Container } from "react-bootstrap";
 import api from "../services/api";
 import {
+    likePost,
+    dislikePost,
+    getReactionInfo
+} from "../services/reactionService";
+import {
     FiSearch, FiX, FiEdit2, FiTrash2,
-    FiUser, FiCalendar, FiPenTool, FiBookOpen, FiEye, FiHeart
+    FiUser, FiCalendar, FiPenTool, FiBookOpen, FiEye,
+    FiThumbsUp, FiThumbsDown
 } from "react-icons/fi";
 import { HiSparkles } from "react-icons/hi";
 
@@ -16,8 +22,8 @@ function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    // Likes state: { [postId]: { likeCount, likedByCurrentUser } }
-    const [likeData, setLikeData] = useState({});
+    // Reaction state: { [postId]: { likeCount, dislikeCount, currentReaction } }
+    const [reactionData, setReactionData] = useState({});
 
     // Get logged-in user
     const storedUser = localStorage.getItem("user");
@@ -34,6 +40,29 @@ function Dashboard() {
         fetchPosts();
     }, []);
 
+    const loadReactions = async (postList) => {
+
+        const reactions = {};
+
+        const results = await Promise.allSettled(
+            postList.map((p) => getReactionInfo(p.id))
+        );
+
+        results.forEach((result, index) => {
+            if (result.status === "fulfilled") {
+                reactions[postList[index].id] = result.value;
+            } else {
+                console.error(
+                    "Failed to load reaction for post",
+                    postList[index].id,
+                    result.reason
+                );
+            }
+        });
+
+        setReactionData(reactions);
+    };
+
     const fetchPosts = async () => {
 
         try {
@@ -47,21 +76,7 @@ function Dashboard() {
             const fetchedPosts = response.data;
             setPosts(fetchedPosts);
 
-            // Fetch like status for every post in parallel
-            const likeResults = await Promise.allSettled(
-                fetchedPosts.map((p) =>
-                    api.get(`/posts/${p.id}/like`)
-                )
-            );
-
-            const newLikeData = {};
-            likeResults.forEach((result, index) => {
-                if (result.status === "fulfilled") {
-                    newLikeData[fetchedPosts[index].id] =
-                        result.value.data;
-                }
-            });
-            setLikeData(newLikeData);
+            await loadReactions(fetchedPosts);
 
         } catch (error) {
 
@@ -82,39 +97,46 @@ function Dashboard() {
     };
 
     // =========================================================
-    // LIKE / UNLIKE
+    // REACTIONS — LIKE / DISLIKE
     // =========================================================
 
     const handleLike = async (postId) => {
+
         try {
-            const response = await api.post(`/posts/${postId}/like`);
-            setLikeData((prev) => ({
-                ...prev,
-                [postId]: response.data
+
+            const data = await likePost(postId);
+
+            setReactionData((previous) => ({
+                ...previous,
+                [postId]: data
             }));
+
         } catch (error) {
-            console.error("Like error:", error);
+
+            console.error(
+                "Failed to like post",
+                error
+            );
         }
     };
 
-    const handleUnlike = async (postId) => {
-        try {
-            const response = await api.delete(`/posts/${postId}/like`);
-            setLikeData((prev) => ({
-                ...prev,
-                [postId]: response.data
-            }));
-        } catch (error) {
-            console.error("Unlike error:", error);
-        }
-    };
+    const handleDislike = async (postId) => {
 
-    const toggleLike = (postId) => {
-        const current = likeData[postId];
-        if (current?.likedByCurrentUser) {
-            handleUnlike(postId);
-        } else {
-            handleLike(postId);
+        try {
+
+            const data = await dislikePost(postId);
+
+            setReactionData((previous) => ({
+                ...previous,
+                [postId]: data
+            }));
+
+        } catch (error) {
+
+            console.error(
+                "Failed to dislike post",
+                error
+            );
         }
     };
 
@@ -364,33 +386,36 @@ function Dashboard() {
                                 {/* Card Footer Actions */}
                                 <div className="post-actions">
 
-                                    {/* Combined Like toggle button */}
-                                    {(() => {
-                                        const cl = likeData[post.id] || {
-                                            likeCount: 0,
-                                            likedByCurrentUser: false
-                                        };
-                                        return (
-                                            <button
-                                                className={`btn-like-toggle${
-                                                    cl.likedByCurrentUser
-                                                        ? " liked"
-                                                        : ""
-                                                }`}
-                                                onClick={() =>
-                                                    toggleLike(post.id)
-                                                }
-                                                title={
-                                                    cl.likedByCurrentUser
-                                                        ? "Unlike"
-                                                        : "Like"
-                                                }
-                                            >
-                                                <FiHeart size={14} />
-                                                {cl.likeCount}
-                                            </button>
-                                        );
-                                    })()}
+                                    {/* Reaction Buttons */}
+                                    <div className="reaction-section">
+
+                                        <button
+                                            className={`btn-reaction btn-reaction-like${
+                                                reactionData[post.id]?.currentReaction === "LIKE"
+                                                    ? " active-reaction"
+                                                    : ""
+                                            }`}
+                                            onClick={() => handleLike(post.id)}
+                                            title="Like this post"
+                                        >
+                                            <FiThumbsUp size={13} />
+                                            <span>{reactionData[post.id]?.likeCount ?? 0}</span>
+                                        </button>
+
+                                        <button
+                                            className={`btn-reaction btn-reaction-dislike${
+                                                reactionData[post.id]?.currentReaction === "DISLIKE"
+                                                    ? " active-reaction"
+                                                    : ""
+                                            }`}
+                                            onClick={() => handleDislike(post.id)}
+                                            title="Dislike this post"
+                                        >
+                                            <FiThumbsDown size={13} />
+                                            <span>{reactionData[post.id]?.dislikeCount ?? 0}</span>
+                                        </button>
+
+                                    </div>
 
                                     <Link
                                         to={`/posts/${post.id}`}

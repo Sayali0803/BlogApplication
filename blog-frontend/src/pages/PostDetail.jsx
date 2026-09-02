@@ -3,9 +3,14 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Container } from "react-bootstrap";
 import api from "../services/api";
 import {
+    likePost,
+    dislikePost,
+    getReactionInfo
+} from "../services/reactionService";
+import {
     FiArrowLeft, FiEdit2, FiTrash2,
     FiUser, FiCalendar, FiTag, FiBookOpen,
-    FiMessageCircle, FiSend, FiHeart
+    FiMessageCircle, FiSend, FiThumbsUp, FiThumbsDown
 } from "react-icons/fi";
 
 function PostDetail() {
@@ -23,8 +28,8 @@ function PostDetail() {
     const [commentLoading, setCommentLoading] = useState(false);
     const [commentError, setCommentError] = useState("");
 
-    // Likes state  { [postId]: { likeCount, likedByCurrentUser } }
-    const [likeData, setLikeData] = useState({});
+    // Reaction state: { [postId]: { likeCount, dislikeCount, currentReaction } }
+    const [reactionData, setReactionData] = useState({});
 
     // Get logged-in user
     const storedUser = localStorage.getItem("user");
@@ -66,29 +71,28 @@ function PostDetail() {
     }, [id]);
 
     // =========================================================
-    // FETCH LIKE STATUS
+    // FETCH REACTION INFO
     // =========================================================
 
     useEffect(() => {
 
-        const fetchLikeStatus = async () => {
+        const fetchReaction = async () => {
 
             try {
 
-                const response = await api.get(`/posts/${id}/like`);
-                setLikeData((prev) => ({
+                const data = await getReactionInfo(id);
+                setReactionData((prev) => ({
                     ...prev,
-                    [id]: response.data
+                    [id]: data
                 }));
 
             } catch (error) {
 
-                // If endpoint not available yet, default to 0 / not liked
-                console.error("Fetch like status error:", error);
+                console.error("Fetch reaction error:", error);
             }
         };
 
-        if (id) fetchLikeStatus();
+        if (id) fetchReaction();
 
     }, [id]);
 
@@ -144,49 +148,40 @@ function PostDetail() {
     };
 
     // =========================================================
-    // LIKE / UNLIKE
+    // REACTIONS — LIKE / DISLIKE
     // =========================================================
 
     const handleLike = async (postId) => {
 
         try {
 
-            const response = await api.post(`/posts/${postId}/like`);
+            const data = await likePost(postId);
 
-            setLikeData((previous) => ({
+            setReactionData((previous) => ({
                 ...previous,
-                [postId]: response.data
+                [postId]: data
             }));
 
         } catch (error) {
 
-            console.error("Like error:", error);
+            console.error("Failed to like post", error);
         }
     };
 
-    const handleUnlike = async (postId) => {
+    const handleDislike = async (postId) => {
 
         try {
 
-            const response = await api.delete(`/posts/${postId}/like`);
+            const data = await dislikePost(postId);
 
-            setLikeData((previous) => ({
+            setReactionData((previous) => ({
                 ...previous,
-                [postId]: response.data
+                [postId]: data
             }));
 
         } catch (error) {
 
-            console.error("Unlike error:", error);
-        }
-    };
-
-    const toggleLike = (postId) => {
-        const current = likeData[postId];
-        if (current?.likedByCurrentUser) {
-            handleUnlike(postId);
-        } else {
-            handleLike(postId);
+            console.error("Failed to dislike post", error);
         }
     };
 
@@ -386,51 +381,46 @@ function PostDetail() {
                         {post.content}
                     </div>
 
-                    {/* Like / Unlike */}
-                    {(() => {
-                        const cl =
-                            likeData[post.id] || {
-                                likeCount: 0,
-                                likedByCurrentUser: false
-                            };
+                    {/* Reactions — Like / Dislike */}
+                    <div className="post-like-row">
 
-                        return (
-                            <div className="post-like-row">
+                        <div className="reaction-section">
 
-                                {/* Count */}
-                                <span className="like-count-badge">
-                                    <FiHeart
-                                        size={15}
-                                        className={
-                                            cl.likedByCurrentUser
-                                                ? "like-heart filled"
-                                                : "like-heart"
-                                        }
-                                    />
-                                    {cl.likeCount}{" "}
-                                    {cl.likeCount === 1 ? "Like" : "Likes"}
+                            <button
+                                className={`btn-reaction btn-reaction-like${
+                                    reactionData[post.id]?.currentReaction === "LIKE"
+                                        ? " active-reaction"
+                                        : ""
+                                }`}
+                                onClick={() => handleLike(post.id)}
+                                title="Like this post"
+                            >
+                                <FiThumbsUp size={14} />
+                                <span>
+                                    {reactionData[post.id]?.likeCount ?? 0}
+                                    {" "}Like{reactionData[post.id]?.likeCount !== 1 ? "s" : ""}
                                 </span>
+                            </button>
 
-                                {/* Action button */}
-                                {cl.likedByCurrentUser ? (
-                                    <button
-                                        className="btn-unlike-pill"
-                                        onClick={() => toggleLike(post.id)}
-                                    >
-                                        <FiHeart size={13} /> Unlike
-                                    </button>
-                                ) : (
-                                    <button
-                                        className="btn-like-pill"
-                                        onClick={() => toggleLike(post.id)}
-                                    >
-                                        <FiHeart size={13} /> Like
-                                    </button>
-                                )}
+                            <button
+                                className={`btn-reaction btn-reaction-dislike${
+                                    reactionData[post.id]?.currentReaction === "DISLIKE"
+                                        ? " active-reaction"
+                                        : ""
+                                }`}
+                                onClick={() => handleDislike(post.id)}
+                                title="Dislike this post"
+                            >
+                                <FiThumbsDown size={14} />
+                                <span>
+                                    {reactionData[post.id]?.dislikeCount ?? 0}
+                                    {" "}Dislike{reactionData[post.id]?.dislikeCount !== 1 ? "s" : ""}
+                                </span>
+                            </button>
 
-                            </div>
-                        );
-                    })()}
+                        </div>
+
+                    </div>
 
                     {/* Owner Actions */}
                     {isOwner && (
@@ -530,11 +520,11 @@ function PostDetail() {
                         <div className="comments-list">
                             {comments.map((comment) => {
 
-                                // Show trash only to the comment's author
+                                // Show trash icon only to the comment's author
                                 const isCommentOwner =
-                                    currentUser && (
-                                        comment.userName  === currentUser.name  ||
+                                    currentUser != null && (
                                         comment.userEmail === currentUser.email ||
+                                        comment.userName  === currentUser.name  ||
                                         String(comment.userId) === String(currentUser.id)
                                     );
 
