@@ -10,6 +10,8 @@ public class PostResponse {
 	    private LocalDateTime createdAt;
 	    private LocalDateTime updatedAt;
 	    private UserResponseDto user;
+	    
+	    
 		public PostResponse(Long id, String title, String content, LocalDateTime createdAt, LocalDateTime updatedAt,
 				UserResponseDto user) {
 			super();

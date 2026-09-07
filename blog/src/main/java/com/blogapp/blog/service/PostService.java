@@ -2,10 +2,13 @@ package com.blogapp.blog.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.blogapp.blog.dto.PageResponse;
 import com.blogapp.blog.dto.PostRequest;
 import com.blogapp.blog.dto.PostResponse;
 import com.blogapp.blog.dto.UserResponseDto;
@@ -67,9 +70,9 @@ public class PostService {
 	}
 
 	// READ ALL
-	public List<PostResponse> getAllPosts() {
-		return postRepository.findAll().stream().map(this::convertToResponse).toList();
-	}
+//	public List<PostResponse> getAllPosts() {
+//		return postRepository.findAll().stream().map(this::convertToResponse).toList();
+//	}
 
 	// READ ONE
 	public PostResponse getPostById(Long id) {
@@ -141,5 +144,27 @@ public class PostService {
 
 		return new PostResponse(post.getId(), post.getTitle(), post.getContent(), post.getCreatedAt(),
 				post.getUpdatedAt(), userResponse);
+	}
+	
+	// READ ALL with Page
+	
+	public PageResponse<PostResponse> getAllPosts(Pageable pageable){
+		
+		Page<Post> postPage = postRepository.findAll(pageable);
+		
+		List<PostResponse> postResponse = postPage.getContent()
+													.stream()
+													.map(this::convertToResponse)
+													.toList();
+		
+		return new PageResponse<>(
+				postResponse,
+				postPage.getNumber(),
+				postPage.getSize(),
+				postPage.getTotalElements(),
+				postPage.getTotalPages(),
+				postPage.isFirst(),
+				postPage.isLast()
+				);
 	}
 }

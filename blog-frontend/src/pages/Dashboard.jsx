@@ -22,6 +22,15 @@ function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    // Pagination
+    const [page, setPage] = useState(0);
+    const [pageSize] = useState(5);
+    const [totalPages, setTotalPages] = useState(0);
+
+    // Sorting
+    const [sortField, setSortField] = useState("createdAt");
+    const [sortDirection, setSortDirection] = useState("desc");
+
     // Reaction state: { [postId]: { likeCount, dislikeCount, currentReaction } }
     const [reactionData, setReactionData] = useState({});
 
@@ -38,7 +47,7 @@ function Dashboard() {
 
     useEffect(() => {
         fetchPosts();
-    }, []);
+    }, [page, sortField, sortDirection]);
 
     const loadReactions = async (postList) => {
 
@@ -70,11 +79,13 @@ function Dashboard() {
             setLoading(true);
             setError("");
 
-            const response =
-                await api.get("/posts");
+            const response = await api.get(
+                `/posts?page=${page}&size=${pageSize}&sort=${sortField},${sortDirection}`
+            );
 
-            const fetchedPosts = response.data;
+            const fetchedPosts = response.data.content;
             setPosts(fetchedPosts);
+            setTotalPages(response.data.totalPages);
 
             await loadReactions(fetchedPosts);
 
@@ -323,6 +334,25 @@ function Dashboard() {
                     </div>
                 )}
 
+                {/* Sorting */}
+                <div className="sorting">
+                    <label>Sort by: </label>
+                    <select
+                        value={`${sortField},${sortDirection}`}
+                        onChange={(e) => {
+                            const [field, direction] =
+                                e.target.value.split(",");
+                            setSortField(field);
+                            setSortDirection(direction);
+                            setPage(0);
+                        }}
+                    >
+                        <option value="createdAt,desc">Newest First</option>
+                        <option value="createdAt,asc">Oldest First</option>
+                        <option value="updatedAt,desc">Recently Updated</option>
+                    </select>
+                </div>
+
                 {/* Posts */}
                 {posts.length === 0 ? (
 
@@ -449,6 +479,23 @@ function Dashboard() {
                         );
                     })
                 )}
+
+                {/* Pagination */}
+                <div className="pagination">
+                    <button
+                        disabled={page === 0}
+                        onClick={() => setPage(page - 1)}
+                    >
+                        Previous
+                    </button>
+                    <span>Page {page + 1} of {totalPages}</span>
+                    <button
+                        disabled={page >= totalPages - 1}
+                        onClick={() => setPage(page + 1)}
+                    >
+                        Next
+                    </button>
+                </div>
 
             </Container>
         </div>

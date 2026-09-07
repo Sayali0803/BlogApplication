@@ -2,6 +2,9 @@ package com.blogapp.blog.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.blogapp.blog.dto.PageResponse;
 import com.blogapp.blog.dto.PostRequest;
 import com.blogapp.blog.dto.PostResponse;
 import com.blogapp.blog.entity.Post;
@@ -42,12 +46,24 @@ public class PostController {
                 .body(response);
     }
 
+//    @GetMapping
+//    public ResponseEntity<List<PostResponse>> getAllPosts() {
+//
+//        return ResponseEntity.ok(
+//                postService.getAllPosts()
+//        );
+//    }
+    
     @GetMapping
-    public ResponseEntity<List<PostResponse>> getAllPosts() {
-
-        return ResponseEntity.ok(
-                postService.getAllPosts()
-        );
+    public ResponseEntity<PageResponse <PostResponse>> getAllPosts(
+    		
+    		@PageableDefault(
+    				page = 0,
+    				size = 5,
+    				sort = "createdAt",
+    				direction = Sort.Direction.DESC)
+    		Pageable pageable){
+    	return ResponseEntity.ok(postService.getAllPosts(pageable));
     }
 
     @GetMapping("/{id}")
