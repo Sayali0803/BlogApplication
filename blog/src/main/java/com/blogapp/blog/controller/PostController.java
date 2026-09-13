@@ -78,10 +78,10 @@ public class PostController {
     @PutMapping("/{id}")
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable Long id,
-            @RequestBody Post post) {
+            @Valid @RequestBody PostRequest request) {
 
         return ResponseEntity.ok(
-                postService.updatePost(id, post)
+                postService.updatePost(id,request)
         );
     }
 

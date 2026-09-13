@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.blogapp.blog.Enum.ReactionType;
 import com.blogapp.blog.dto.PageResponse;
 import com.blogapp.blog.dto.PostRequest;
 import com.blogapp.blog.dto.PostResponse;
@@ -18,6 +19,7 @@ import com.blogapp.blog.entity.User;
 import com.blogapp.blog.exception.ResourceNotFoundException;
 import com.blogapp.blog.exception.UnauthorizedException;
 import com.blogapp.blog.repository.CategoryRepository;
+import com.blogapp.blog.repository.PostReactionRepository;
 import com.blogapp.blog.repository.PostRepository;
 import com.blogapp.blog.repository.UserRepository;
 
@@ -29,15 +31,17 @@ public class PostService {
 	private final UserRepository userRepository;
 	
 	private final CategoryRepository categoryRepository;
-
+	
+	private final PostReactionRepository postReactionRepository;
 	
 
 	public PostService(PostRepository postRepository, UserRepository userRepository,
-			CategoryRepository categoryRepository) {
+			CategoryRepository categoryRepository,PostReactionRepository postReactionRepository) {
 		super();
 		this.postRepository = postRepository;
 		this.userRepository = userRepository;
 		this.categoryRepository = categoryRepository;
+		this.postReactionRepository = postReactionRepository;
 	}
 
 	// CREATE
@@ -84,7 +88,7 @@ public class PostService {
 	}
 
 	// UPDATE
-	public PostResponse updatePost(Long id, Post updatedPost) {
+	public PostResponse updatePost(Long id, PostRequest request) {
 
 		Post existingPost = postRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + id));
@@ -97,9 +101,17 @@ public class PostService {
 			throw new UnauthorizedException("You are not allowed to update this post");
 		}
 
-		existingPost.setTitle(updatedPost.getTitle());
-		existingPost.setContent(updatedPost.getContent());
-
+		Category category = categoryRepository
+		        .findById(request.getCategoryId())
+		        .orElseThrow(() ->
+		                new ResourceNotFoundException(
+		                        "Category not found with id: "
+		                                
+		                )
+		        );
+		existingPost.setTitle(request.getTitle());
+		existingPost.setContent(request.getContent());
+		existingPost.setCategory(category);
 		Post post = postRepository.save(existingPost);
 		return convertToResponse(post);
 	}
@@ -137,13 +149,86 @@ public class PostService {
 
 	}
 
-	private PostResponse convertToResponse(Post post) {
+	/*private PostResponse convertToResponse(Post post) {
 
 		UserResponseDto userResponse = new UserResponseDto(post.getUser().getId(), post.getUser().getName(),
 				post.getUser().getEmail());
+		Long categoryId = null;
+	    String categoryName = null;
 
+	    if (post.getCategory() != null) {
+	        categoryId = post.getCategory().getId();
+	        categoryName = post.getCategory().getName();
+	    }
 		return new PostResponse(post.getId(), post.getTitle(), post.getContent(), post.getCreatedAt(),
-				post.getUpdatedAt(), userResponse);
+				post.getUpdatedAt(),categoryId,categoryName, userResponse);
+	}*/
+	
+	private PostResponse convertToResponse(Post post) {
+
+	    UserResponseDto userResponse = new UserResponseDto(
+	            post.getUser().getId(),
+	            post.getUser().getName(),
+	            post.getUser().getEmail()
+	    );
+
+	    // Category
+	    Long categoryId = null;
+	    String categoryName = null;
+
+	    if (post.getCategory() != null) {
+	        categoryId = post.getCategory().getId();
+	        categoryName = post.getCategory().getName();
+	    }
+
+	    // Like count
+	    long likeCount = postReactionRepository
+	            .countByPostIdAndType(post.getId(), ReactionType.LIKE);
+
+	    // Dislike count
+	    long dislikeCount = postReactionRepository
+	            .countByPostIdAndType(post.getId(), ReactionType.DISLIKE);
+
+	    // Current user's reaction
+	    String currentReaction = null;
+
+	    Authentication authentication =
+	            SecurityContextHolder.getContext().getAuthentication();
+
+	    if (authentication != null
+	            && authentication.isAuthenticated()
+	            && !authentication.getName().equals("anonymousUser")) {
+
+	        String email = authentication.getName();
+
+	        User authenticatedUser = userRepository.findByEmail(email)
+	                .orElse(null);
+
+	        if (authenticatedUser != null) {
+
+	            currentReaction = postReactionRepository
+	                    .findByPostIdAndUserId(
+	                            post.getId(),
+	                            authenticatedUser.getId()
+	                    )
+	                    .map(reaction -> reaction.getType().name())
+	                    .orElse(null);
+	        }
+	    }
+
+	    return new PostResponse(
+	            post.getId(),
+	            post.getTitle(),
+	            post.getContent(),
+	            post.getCreatedAt(),
+	            post.getUpdatedAt(),
+	            categoryId,
+	            categoryName,
+	            likeCount,
+	            dislikeCount,
+	            currentReaction,
+	            userResponse
+	    );
 	}
 	
 	// READ ALL with Page
